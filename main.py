@@ -77,7 +77,6 @@ def main_menu():
         background = pygame.transform.scale(background, (menu_width, menu_height))
         screen.blit(background, [0, 0])
         
-
         title=text_format("Space Invaders", font, 110, yellow)
         if selected=="start":
             text_start=text_format("START", font, 95, white)
@@ -115,11 +114,11 @@ class Alien:
          self.x = x
          self.y = y
          self.imagePath = imagePath
+         alienPicture = pygame.image.load(self.imagePath)
+         self.alienPicture = pygame.transform.scale(alienPicture, (50, 50))
 
     def draw(self, game):
-         alienPicture = pygame.image.load(self.imagePath)
-         alienPicture = pygame.transform.scale(alienPicture, (50, 50))
-         game.screen.blit(alienPicture, (self.x, self.y))          
+         game.screen.blit(self.alienPicture, (self.x, self.y))          
 
     def moveX(self, alienXDirection, alienYDirection):
          if self.x == 0:
@@ -139,6 +138,19 @@ class Alien:
 
     def moveY(self, alienYDirection):
          self.y += alienYDirection
+
+    def checkColision(self, laser):
+         laserTopY = laser.y
+         laserTopX = laser.x
+         alienWidth = self.alienPicture.get_width()
+         alienHeight = self.alienPicture.get_height()
+
+         if laserTopX <= self.x + 10 and laserTopX >= self.x:
+             print("Hihi") 
+             if laserTopY <= self.y and laserTopY >= self.y + alienHeight:
+                 return 1
+         return 0     
+
 
 #Alien creation
 def alien_creator(level, aliens):
@@ -167,6 +179,20 @@ def alien_creator(level, aliens):
                 alien = Alien(40 + 120 * j, 50 + 80 * i , path)
                 aliens.append(alien)                
 
+class Laser:
+    def __init__ (self, x, y):
+         self.x = x
+         self.y = y
+
+    def draw(self, game):
+         laserPicture = pygame.image.load("laser.png")
+         laserPicture = pygame.transform.scale(laserPicture, (50, 50))
+         game.screen.blit(laserPicture, (self.x, self.y))  
+
+    def move(self):
+         self.y -= 10     
+
+
 class Game:
 
      screen = None
@@ -179,6 +205,8 @@ class Game:
      alien_creator(level, aliens)
      alienXDirection = "Left"
      alienYDirection = 0
+     lasers = []
+     cooldown = 0
 
      def redraw_window(self):
          background = pygame.image.load("backgr.png")
@@ -195,6 +223,9 @@ class Game:
          self.hero.draw(self)
          for anAlien in self.aliens:
             anAlien.draw(self)
+
+         for laser in self.lasers:
+             laser.draw(self)   
          pygame.display.update()
 
 
@@ -207,12 +238,14 @@ class Game:
          done = False
 
          while not done:
+             if self.cooldown > 0:
+                 self.cooldown -= 1
              self.redraw_window()
              for event in pygame.event.get():
                  if event.type == pygame.QUIT:
                      done  = True
              # Moving the aliens
-             if self.aliens and self.level > 1:
+             if self.aliens and self.level > 3:
                  for alien in self.aliens:
                      (self.alienXDirection, self.alienYDirection) = alien.moveX(self.alienXDirection, self.alienYDirection)
 
@@ -222,8 +255,19 @@ class Game:
                      if self.alienYDirection > 0:
                          self.alienYDirection -= 1
                      elif self.alienYDirection < 0:
-                         self.alienYDirection += 1         
-            
+                         self.alienYDirection += 1
+                        
+             for laser in self.lasers:
+                 if laser.x < 20:
+                     self.lasers.remove(laser)
+                 else:
+                     laser.move()     
+                     for alien in self.aliens:
+                         if alien.checkColision(laser) == 1:
+                             print("DAAAAAAAAAAAA")
+                             self.aliens.remove(alien)
+                             self.lasers.remove(laser)
+
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
                  self.hero.x -= 10
@@ -232,7 +276,11 @@ class Game:
              if keys[pygame.K_LEFT] and self.hero.x - self.hero_vel > 0:
                  self.hero.x -= 10
              if keys[pygame.K_RIGHT] and self.hero.x - self.hero_vel < game_width - 20:
-                 self.hero.x += 10                       
+                 self.hero.x += 10
+             if keys[pygame.K_w] and self.cooldown == 0:
+                 laser = Laser(self.hero.x + 24, self.hero.y)
+                 self.cooldown = 20
+                 self.lasers.append(laser)
 
          pygame.display.flip()
          self.clock.tick(FPS)
