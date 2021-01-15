@@ -1,13 +1,13 @@
 import pygame
 
 import os
-
 # Game Initialization
 pygame.init()
 
 # music
 pygame.mixer.init()
 pygame.mixer.music.load("start.mp3")
+#pygame.mixer.music.play(-1)
 # Center the Game Application
 #os.environ['SDL_VIDEO_CENTERED'] = '1'
 
@@ -36,6 +36,9 @@ yellow=(255, 255, 0)
 # Game Fonts
 font = "Retro.ttf"
 
+# Game Hero
+heroPicture = pygame.image.load("spaceship.png")
+heroPicture = pygame.transform.scale(heroPicture, (100, 100))
 
 # Game Framerate
 clock = pygame.time.Clock()
@@ -43,7 +46,8 @@ FPS=30
 
 # Main Menu
 def main_menu():
-
+    width = 800
+    height = 600
     menu=True
     selected="start"
 
@@ -60,7 +64,7 @@ def main_menu():
                 if event.key==pygame.K_RETURN:
                     if selected=="start":
                         print("Start")
-                        # TO DO game logic
+                        game = Game(width, height)
                     if selected=="quit":
                         pygame.quit()
                         quit()
@@ -94,6 +98,58 @@ def main_menu():
         pygame.display.update()
         clock.tick(FPS)
         pygame.display.set_caption("Space Invaders")
+
+class Hero:
+     def __init__ (self, x, y):
+         self.x = x
+         self.y = y
+    
+     def draw(self, game):
+         #image = pygame.image.load(heroPicture)
+         game.screen.blit(heroPicture, (self.x, self.y))
+     
+class Game:
+
+     screen = None
+     aliens = []
+     level = 1
+     lives = 5
+
+     def redraw_window(self):
+         background = pygame.image.load("backgr.png")
+         background = pygame.transform.scale(background, (screen_width, screen_height))
+         screen.blit(background, [0, 0])
+
+         #text
+         lives_label = text_format(f"Lives: {self.lives}", font, 50, white)
+         level_label = text_format(f"Level: {self.level}", font, 50, white)
+
+         screen.blit(lives_label, (10, 10))
+         screen.blit(level_label, (650, 10))
+
+         hero = Hero(self.width/2, self.height - 100)
+
+         hero.draw(self)
+         pygame.display.update()
+
+
+     def __init__(self, width, height):
+         pygame.init()
+         self.width = width
+         self.height = height
+         self.screen = pygame.display.set_mode((width, height))
+         self.clock = pygame.time.Clock()
+         done = False
+
+         while not done:
+             self.redraw_window()
+             for event in pygame.event.get():
+                 if event.type == pygame.QUIT:
+                     done  = True
+
+         pygame.display.flip()
+         self.clock.tick(60)
+         self.screen.fill((0, 0, 0))             
 
 #Initialize the Game
 main_menu()
