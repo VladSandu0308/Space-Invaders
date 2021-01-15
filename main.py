@@ -121,11 +121,17 @@ class Alien:
          alienPicture = pygame.transform.scale(alienPicture, (50, 50))
          game.screen.blit(alienPicture, (self.x, self.y))          
 
-    def move(self, direction):
-         if direction == "Left":
-             self.x -= 1
+    def move(self, alien_direction):
+         if self.x == 0:
+             alien_direction = "Right"
+
+         elif self.x == game_width:
+             alien_direction = "Left"   
+             
+         if alien_direction == "Left":
+             self.x -= 20
          else:
-             self.x +=1
+             self.x += 20
 
 
 #Alien creation
@@ -153,13 +159,14 @@ def alien_creator(level, aliens):
 class Game:
 
      screen = None
-     level = 4
+     level = 3
      lives = 5
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
      #defining aliens
      aliens = []
      alien_creator(level, aliens)
+     alien_direction = "Left"
 
      def redraw_window(self):
          background = pygame.image.load("backgr.png")
@@ -185,7 +192,6 @@ class Game:
          self.height = height
          self.screen = pygame.display.set_mode((width, height))
          self.clock = pygame.time.Clock()
-         self.alien_direction = "Right"
          done = False
 
          while not done:
@@ -195,16 +201,6 @@ class Game:
                      done  = True
              
              if self.aliens:
-                # if self.aliens[0].x > 0 and self.aliens[-1].x < game_width:
-                #     for alien in self.aliens:
-                 #       alien.moveRight()
-               #  elif self.aliens[-1].x > game_width and self.aliens[0].x > 0:
-                #     for alien in self.aliens:
-                #        alien.moveLeft()
-                 if self.aliens[0].x == 0:
-                     direction = "Right"
-                 if self.aliens[-1].x  == game_width:
-                     direction = "Left"
                  for alien in self.aliens:
                      alien.move(self.alien_direction)       
 
