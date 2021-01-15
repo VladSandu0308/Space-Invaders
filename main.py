@@ -196,7 +196,7 @@ class Laser:
 class Game:
 
      screen = None
-     level = 2
+     level = 1
      lives = 5
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
@@ -244,6 +244,16 @@ class Game:
              for event in pygame.event.get():
                  if event.type == pygame.QUIT:
                      done  = True
+
+             # change level
+             
+             if len(self.aliens) == 0:
+                 end_level = text_format("LEVEL COMPLETE", font, 50, yellow)
+                 self.screen.blit(end_level, (self.width / 2, self.height / 2))
+
+                 self.level += 1
+                 alien_creator(self.level, self.aliens)
+
              # Moving the aliens
              if self.aliens and self.level > 3:
                  for alien in self.aliens:
