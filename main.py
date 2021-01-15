@@ -12,9 +12,12 @@ pygame.mixer.music.load("start.mp3")
 #os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 # Game Resolution
-screen_width=800
-screen_height=600
-screen=pygame.display.set_mode((screen_width, screen_height))
+menu_width=800
+menu_height=600
+screen=pygame.display.set_mode((menu_width, menu_height))
+
+game_width=1000
+game_height=700
 
 # Text Renderer
 def text_format(message, textFont, textSize, textColor):
@@ -46,8 +49,8 @@ FPS=30
 
 # Main Menu
 def main_menu():
-    width = 800
-    height = 600
+    width = menu_width
+    height = menu_height
     menu=True
     selected="start"
 
@@ -64,14 +67,14 @@ def main_menu():
                 if event.key==pygame.K_RETURN:
                     if selected=="start":
                         print("Start")
-                        game = Game(width, height)
+                        game = Game(game_width, game_height)
                     if selected=="quit":
                         pygame.quit()
                         quit()
 
         # Main Menu UI
         background = pygame.image.load("back.jpg")
-        background = pygame.transform.scale(background, (screen_width, screen_height))
+        background = pygame.transform.scale(background, (menu_width, menu_height))
         screen.blit(background, [0, 0])
         
 
@@ -90,9 +93,9 @@ def main_menu():
         quit_rect=text_quit.get_rect()
 
         # Main Menu Text
-        screen.blit(title, (screen_width/2 - (title_rect[2]/2), 60))
-        screen.blit(text_start, (screen_width/2 - (start_rect[2]/2), 250))
-        screen.blit(text_quit, (screen_width/2 - (quit_rect[2]/2), 320))
+        screen.blit(title, (menu_width/2 - (title_rect[2]/2), 60))
+        screen.blit(text_start, (menu_width/2 - (start_rect[2]/2), 250))
+        screen.blit(text_quit, (menu_width/2 - (quit_rect[2]/2), 320))
 
 
         pygame.display.update()
@@ -105,19 +108,62 @@ class Hero:
          self.y = y
     
      def draw(self, game):
-         #image = pygame.image.load(heroPicture)
          game.screen.blit(heroPicture, (self.x, self.y))
-     
+
+class Alien:
+    def __init__ (self, x, y, imagePath):
+         self.x = x
+         self.y = y
+         self.imagePath = imagePath
+
+    def draw(self, game):
+         alienPicture = pygame.image.load(self.imagePath)
+         alienPicture = pygame.transform.scale(alienPicture, (50, 50))
+         game.screen.blit(alienPicture, (self.x, self.y))          
+
+    def move(self, direction):
+         if direction == "Left":
+             self.x -= 1
+         else:
+             self.x +=1
+
+
+#Alien creation
+def alien_creator(level, aliens):
+    if (level == 1):
+        for i in range(2):
+            for j in range(3):
+                alien = Alien(120 + 350 * j, 50 + 80 * i , "alien1.png")
+                aliens.append(alien)
+
+    if (level == 2):
+        for i in range(2):
+            for j in range(8):
+                path = "alien" + str(i + 1) + ".png" 
+                alien = Alien(40 + 120 * j, 50 + 80 * i , path)
+                aliens.append(alien)
+
+    if (level >= 3):
+        for i in range(3):
+            for j in range(8):
+                path = "alien" + str(i + 1) + ".png" 
+                alien = Alien(40 + 120 * j, 50 + 80 * i , path)
+                aliens.append(alien)                
+
 class Game:
 
      screen = None
-     aliens = []
-     level = 1
+     level = 4
      lives = 5
+     hero = Hero(game_width/2 - 50, game_height - 100)
+     hero_vel = 10
+     #defining aliens
+     aliens = []
+     alien_creator(level, aliens)
 
      def redraw_window(self):
          background = pygame.image.load("backgr.png")
-         background = pygame.transform.scale(background, (screen_width, screen_height))
+         background = pygame.transform.scale(background, (1000, 800))
          screen.blit(background, [0, 0])
 
          #text
@@ -125,11 +171,11 @@ class Game:
          level_label = text_format(f"Level: {self.level}", font, 50, white)
 
          screen.blit(lives_label, (10, 10))
-         screen.blit(level_label, (650, 10))
+         screen.blit(level_label, (self.width - 150, 10))
 
-         hero = Hero(self.width/2, self.height - 100)
-
-         hero.draw(self)
+         self.hero.draw(self)
+         for anAlien in self.aliens:
+            anAlien.draw(self)
          pygame.display.update()
 
 
@@ -139,6 +185,7 @@ class Game:
          self.height = height
          self.screen = pygame.display.set_mode((width, height))
          self.clock = pygame.time.Clock()
+         self.alien_direction = "Right"
          done = False
 
          while not done:
@@ -146,6 +193,30 @@ class Game:
              for event in pygame.event.get():
                  if event.type == pygame.QUIT:
                      done  = True
+             
+             if self.aliens:
+                # if self.aliens[0].x > 0 and self.aliens[-1].x < game_width:
+                #     for alien in self.aliens:
+                 #       alien.moveRight()
+               #  elif self.aliens[-1].x > game_width and self.aliens[0].x > 0:
+                #     for alien in self.aliens:
+                #        alien.moveLeft()
+                 if self.aliens[0].x == 0:
+                     direction = "Right"
+                 if self.aliens[-1].x  == game_width:
+                     direction = "Left"
+                 for alien in self.aliens:
+                     alien.move(self.alien_direction)       
+
+             keys = pygame.key.get_pressed()
+             if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
+                 self.hero.x -= 10
+             if keys[pygame.K_d] and self.hero.x - self.hero_vel < game_width - 20:
+                 self.hero.x += 10
+             if keys[pygame.K_LEFT] and self.hero.x - self.hero_vel > 0:
+                 self.hero.x -= 10
+             if keys[pygame.K_RIGHT] and self.hero.x - self.hero_vel < game_width - 20:
+                 self.hero.x += 10                    
 
          pygame.display.flip()
          self.clock.tick(60)
