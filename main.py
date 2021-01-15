@@ -6,7 +6,7 @@ pygame.init()
 
 # music
 pygame.mixer.init()
-pygame.mixer.music.load("start.mp3")
+#pygame.mixer.music.load("start.mp3")
 #pygame.mixer.music.play(-1)
 # Center the Game Application
 #os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -145,9 +145,9 @@ class Alien:
          alienWidth = self.alienPicture.get_width()
          alienHeight = self.alienPicture.get_height()
 
-         if laserTopX <= self.x + 10 and laserTopX >= self.x:
-             print("Hihi") 
-             if laserTopY <= self.y and laserTopY >= self.y + alienHeight:
+         if laserTopX <= self.x + alienWidth / 2 and laserTopX >= self.x - alienWidth / 2:             
+             if laserTopY >= self.y - alienHeight / 2 and laserTopY <= self.y + alienHeight / 2:
+                 print("Hihi") 
                  return 1
          return 0     
 
@@ -258,7 +258,8 @@ class Game:
                          self.alienYDirection += 1
                         
              for laser in self.lasers:
-                 if laser.x < 20:
+                 if laser.y < 20:
+                     print("DELETE")
                      self.lasers.remove(laser)
                  else:
                      laser.move()     
