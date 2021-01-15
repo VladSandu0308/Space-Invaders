@@ -45,7 +45,7 @@ heroPicture = pygame.transform.scale(heroPicture, (100, 100))
 
 # Game Framerate
 clock = pygame.time.Clock()
-FPS=30
+FPS=120
 
 # Main Menu
 def main_menu():
@@ -121,19 +121,24 @@ class Alien:
          alienPicture = pygame.transform.scale(alienPicture, (50, 50))
          game.screen.blit(alienPicture, (self.x, self.y))          
 
-    def move(self, alien_direction):
+    def moveX(self, alienXDirection, alienYDirection):
          if self.x == 0:
-             alien_direction = "Right"
+             alienXDirection = "Right"
+             alienYDirection = -5
 
-         elif self.x == game_width:
-             alien_direction = "Left"   
+         elif self.x == game_width - 40:
+             alienXDirection = "Left"   
+             alienYDirection = 5
              
-         if alien_direction == "Left":
-             self.x -= 1
+         if alienXDirection == "Left":
+             self.x -= 10
          else:
-             self.x += 1
-         return alien_direction    
+             self.x += 10
 
+         return (alienXDirection, alienYDirection)    
+
+    def moveY(self, alienYDirection):
+         self.y += alienYDirection
 
 #Alien creation
 def alien_creator(level, aliens):
@@ -165,14 +170,15 @@ def alien_creator(level, aliens):
 class Game:
 
      screen = None
-     level = 4
+     level = 2
      lives = 5
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
      #defining aliens
      aliens = []
      alien_creator(level, aliens)
-     alien_direction = "Left"
+     alienXDirection = "Left"
+     alienYDirection = 0
 
      def redraw_window(self):
          background = pygame.image.load("backgr.png")
@@ -206,10 +212,18 @@ class Game:
                  if event.type == pygame.QUIT:
                      done  = True
              # Moving the aliens
-             if self.aliens and self.level > 3:
+             if self.aliens and self.level > 1:
                  for alien in self.aliens:
-                     self.alien_direction = alien.move(self.alien_direction)       
+                     (self.alienXDirection, self.alienYDirection) = alien.moveX(self.alienXDirection, self.alienYDirection)
 
+                 if self.alienYDirection != 0:
+                     for alien in self.aliens:
+                         alien.moveY(self.alienYDirection)
+                     if self.alienYDirection > 0:
+                         self.alienYDirection -= 1
+                     elif self.alienYDirection < 0:
+                         self.alienYDirection += 1         
+            
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
                  self.hero.x -= 10
@@ -218,10 +232,10 @@ class Game:
              if keys[pygame.K_LEFT] and self.hero.x - self.hero_vel > 0:
                  self.hero.x -= 10
              if keys[pygame.K_RIGHT] and self.hero.x - self.hero_vel < game_width - 20:
-                 self.hero.x += 10                    
+                 self.hero.x += 10                       
 
          pygame.display.flip()
-         self.clock.tick(60)
+         self.clock.tick(FPS)
          self.screen.fill((0, 0, 0))             
 
 #Initialize the Game
