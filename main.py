@@ -129,27 +129,33 @@ class Alien:
              alien_direction = "Left"   
              
          if alien_direction == "Left":
-             self.x -= 20
+             self.x -= 1
          else:
-             self.x += 20
+             self.x += 1
+         return alien_direction    
 
 
 #Alien creation
 def alien_creator(level, aliens):
     if (level == 1):
         for i in range(2):
+             alien = Alien (300 + 320 * i, 50, "alien1.png")
+             aliens.append(alien)     
+
+    if (level == 2):
+        for i in range(2):
             for j in range(3):
                 alien = Alien(120 + 350 * j, 50 + 80 * i , "alien1.png")
                 aliens.append(alien)
 
-    if (level == 2):
+    if (level == 3):
         for i in range(2):
             for j in range(8):
                 path = "alien" + str(i + 1) + ".png" 
                 alien = Alien(40 + 120 * j, 50 + 80 * i , path)
                 aliens.append(alien)
 
-    if (level >= 3):
+    if (level >= 4):
         for i in range(3):
             for j in range(8):
                 path = "alien" + str(i + 1) + ".png" 
@@ -159,7 +165,7 @@ def alien_creator(level, aliens):
 class Game:
 
      screen = None
-     level = 3
+     level = 4
      lives = 5
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
@@ -199,10 +205,10 @@ class Game:
              for event in pygame.event.get():
                  if event.type == pygame.QUIT:
                      done  = True
-             
-             if self.aliens:
+             # Moving the aliens
+             if self.aliens and self.level > 3:
                  for alien in self.aliens:
-                     alien.move(self.alien_direction)       
+                     self.alien_direction = alien.move(self.alien_direction)       
 
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
