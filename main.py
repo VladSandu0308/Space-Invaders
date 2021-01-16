@@ -109,6 +109,17 @@ class Hero:
     
      def draw(self, game):
          game.screen.blit(heroPicture, (self.x, self.y))
+         
+     def checkColision(self, laser):
+         laserTopY = laser.y
+         laserTopX = laser.x
+         heroWidth = heroPicture.get_width()
+         heroHeight = heroPicture.get_height()
+
+         if laserTopX <= self.x + heroWidth / 2 and laserTopX >= self.x - heroWidth / 2:             
+             if laserTopY >= self.y - heroHeight / 2 and laserTopY <= self.y + heroHeight / 2:
+                 return 1
+         return 0   
 
 class Alien:
     def __init__ (self, x, y, imagePath, canAttack=False):
@@ -118,9 +129,12 @@ class Alien:
          alienPicture = pygame.image.load(self.imagePath)
          self.alienPicture = pygame.transform.scale(alienPicture, (50, 50))
          self.canAttack = canAttack
+         self.cooldown = 0
 
     def draw(self, game):
-         game.screen.blit(self.alienPicture, (self.x, self.y))          
+         game.screen.blit(self.alienPicture, (self.x, self.y))
+         self.cooldown = max(self.cooldown - 1, 0)
+
 
     def moveX(self, alienXDirection, alienYDirection):
          if self.x == 0:
@@ -331,18 +345,27 @@ class Game:
                          if alien.checkColision(laser) == 1:
                              self.aliens.remove(alien)
                              self.hero_lasers.remove(laser)
+                             if alien in self.alien_parents:
+                                 for parent in self.aliens:
+                                     if self.alien_parents[alien] == parent:
+                                         parent.canAttack = True
+                                 
 
              for laser in self.enemy_lasers:
                  if laser.y > self.height:
                      self.enemy_lasers.remove(laser)
                  else:
                      laser.move()
+                     if self.hero.checkColision(laser) == 1:
+                        self.lives -= 1
+                        self.enemy_lasers.remove(laser)
 
              for alien in self.aliens:
-                 if alien.canAttack:
+                 if alien.canAttack and alien.cooldown == 0:
                      if random.randint(1, 20) == 2:
                          laser = EnemyLaser(alien.x, alien.y)
                          self.enemy_lasers.append(laser)
+                         alien.cooldown = 50
                          print("Copiluuuu")
 
              keys = pygame.key.get_pressed()
