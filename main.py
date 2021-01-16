@@ -116,8 +116,8 @@ class Hero:
          heroWidth = heroPicture.get_width()
          heroHeight = heroPicture.get_height()
 
-         if laserTopX <= self.x + heroWidth / 2 and laserTopX >= self.x - heroWidth / 2:             
-             if laserTopY >= self.y - heroHeight / 2 and laserTopY <= self.y + heroHeight / 2:
+         if laserTopX <= self.x + heroWidth and laserTopX >= self.x - 10:             
+             if laserTopY >= self.y and laserTopY <= self.y + heroHeight:
                  return 1
          return 0   
 
@@ -244,7 +244,8 @@ class Game:
      screen = None
      level = 1
      levelMax = 5
-     lives = 5
+     lives = 30
+
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
      #defining aliens
@@ -364,7 +365,8 @@ class Game:
              self.redraw_window()
              for event in pygame.event.get():
                  if event.type == pygame.QUIT:
-                     done  = True
+                     pygame.quit()
+                     quit()
 
              # Moving the aliens
              if self.aliens and self.level > 3:
