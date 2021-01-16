@@ -232,8 +232,8 @@ class EnemyLaser(Laser):
          super().__init__(x, y)
 
     def draw(self, game):
-         laserPicture = pygame.image.load("laser.png")
-         laserPicture = pygame.transform.scale(laserPicture, (50, 50))
+         laserPicture = pygame.image.load("alienLaser.png")
+         laserPicture = pygame.transform.scale(laserPicture, (35, 35))
          game.screen.blit(laserPicture, (self.x, self.y))  
 
     def move(self):
@@ -243,6 +243,7 @@ class Game:
 
      screen = None
      level = 1
+     levelMax = 5
      lives = 5
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
@@ -258,21 +259,20 @@ class Game:
      newLevelCounter = 0
      changedLevel = -1
      doneLevelChange = 0
-
+     background = pygame.image.load("backgr.png")
+     background = pygame.transform.scale(background, (1000, 800))
 
      def redraw_window(self):
-         background = pygame.image.load("backgr.png")
-         background = pygame.transform.scale(background, (1000, 800))
-         screen.blit(background, [0, 0])
+         screen.blit(self.background, [0, 0])
 
-         #text
-         lives_label = text_format(f"Lives: {self.lives}", font, 50, white)
-         level_label = text_format(f"Level: {self.level}", font, 50, white)
+         if self.drawDetails:
+             lives_label = text_format(f"Lives: {self.lives}", font, 50, white)
+             level_label = text_format(f"Level: {self.level}", font, 50, white)
 
-         screen.blit(lives_label, (10, 10))
-         screen.blit(level_label, (self.width - 150, 10))
-
-         self.hero.draw(self)
+             screen.blit(lives_label, (10, 10))
+             screen.blit(level_label, (self.width - 150, 10))
+             self.hero.draw(self)
+        
          for anAlien in self.aliens:
             anAlien.draw(self)
 
@@ -283,26 +283,68 @@ class Game:
              laser.draw(self)      
         
         # change level           
-         if len(self.aliens) == 0:
+         if len(self.aliens) == 0 and self.endGame == False:
              # in cazul in care nivelul respectiv nu a fost deja considerat terminat
              if self.doneLevelChange != 1 and self.changedLevel != self.level:
-                 self.newLevelCounter = 200
+                 if self.level + 1 != self.levelMax:
+                    self.newLevelCounter = 200
                  self.doneLevelChange = 1
                  self.changedLevel = self.level
 
              if self.newLevelCounter != 0:  
 
-                 if self.newLevelCounter % 50 > 19:
-                     end_level = text_format(f"LEVEL{self.level} COMPLETE", font, 110, yellow)
+                 if self.newLevelCounter % 50 > 19 and self.level + 1 != self.levelMax:
+                     end_level = text_format(f"LEVEL {self.level} COMPLETE!", font, 110, (221, 160, 221))
                      self.screen.blit(end_level, (190, 250))
                  self.newLevelCounter -= 1
-
 
              if self.newLevelCounter == 0:
                  self.doneLevelChange = 0
                  self.level += 1
                  self.alien_parents = {}
-                 alien_creator(self.level, self.aliens, self.alien_parents)    
+                 alien_creator(self.level, self.aliens, self.alien_parents) 
+
+         #Win
+         if self.level == self.levelMax and self.lives != 0:
+             self.aliens = []
+             self.enemy_lasers = []
+             self.hero_lasers = []
+             self.endGame = True
+             self.drawDetails = False
+
+             self.background = pygame.image.load("wonGame.jpg")
+             self.background = pygame.transform.scale(self.background, (1000, 800))
+             won_game = text_format("Congratulations! You won!", font, 70, (60, 179, 113))
+             self.screen.blit(won_game, (200, 30))
+
+             again_label = text_format("If you want to play again press SPACE", font, 50, (0, 128, 128))
+             self.screen.blit(again_label, (190, 100))
+
+             key = pygame.key.get_pressed()
+             if key[pygame.K_SPACE]:
+                 self.lives = 5
+                 self.level = 1
+                 self.endGame = False
+                 alien_creator(self.level, self.aliens, self.alien_parents)  
+                 self.background = pygame.image.load("backgr.png")
+                 self.background = pygame.transform.scale(background, (1000, 800))   
+
+         #Game Over
+         if self.lives == 0:
+             self.aliens = []
+             self.endGame = True
+             end_level = text_format("GAME OVER!", font, 110, (221, 160, 221))
+             self.screen.blit(end_level, (300, 210))
+            
+             again_label = text_format("If you want to play again press SPACE", font, 50, (176, 224, 230))
+             self.screen.blit(again_label, (190, 310))
+
+             key = pygame.key.get_pressed()
+             if key[pygame.K_SPACE]:
+                 self.lives = 5
+                 self.level = 1
+                 self.endGame = False
+                 alien_creator(self.level, self.aliens, self.alien_parents)  
 
          pygame.display.update()
 
@@ -314,7 +356,8 @@ class Game:
          self.screen = pygame.display.set_mode((width, height))
          self.clock = pygame.time.Clock()
          done = False
-
+         self.endGame = False
+         self.drawDetails = True
          while not done:
              if self.cooldown > 0:
                  self.cooldown -= 1
@@ -363,10 +406,9 @@ class Game:
              for alien in self.aliens:
                  if alien.canAttack and alien.cooldown == 0:
                      if random.randint(1, 20) == 2:
-                         laser = EnemyLaser(alien.x, alien.y)
+                         laser = EnemyLaser(alien.x + 8, alien.y + 24)
                          self.enemy_lasers.append(laser)
-                         alien.cooldown = 50
-                         print("Copiluuuu")
+                         alien.cooldown = 100
 
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
