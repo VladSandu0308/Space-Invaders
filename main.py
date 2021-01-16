@@ -1,4 +1,5 @@
 import pygame
+import random
 
 import os
 # Game Initialization
@@ -110,12 +111,13 @@ class Hero:
          game.screen.blit(heroPicture, (self.x, self.y))
 
 class Alien:
-    def __init__ (self, x, y, imagePath):
+    def __init__ (self, x, y, imagePath, canAttack=False):
          self.x = x
          self.y = y
          self.imagePath = imagePath
          alienPicture = pygame.image.load(self.imagePath)
          self.alienPicture = pygame.transform.scale(alienPicture, (50, 50))
+         self.canAttack = canAttack
 
     def draw(self, game):
          game.screen.blit(self.alienPicture, (self.x, self.y))          
@@ -123,16 +125,16 @@ class Alien:
     def moveX(self, alienXDirection, alienYDirection):
          if self.x == 0:
              alienXDirection = "Right"
-             alienYDirection = -5
+             alienYDirection = -3
 
          elif self.x == game_width - 40:
              alienXDirection = "Left"   
-             alienYDirection = 5
+             alienYDirection = 3
              
          if alienXDirection == "Left":
-             self.x -= 10
+             self.x -= 2
          else:
-             self.x += 10
+             self.x += 2
 
          return (alienXDirection, alienYDirection)    
 
@@ -152,36 +154,56 @@ class Alien:
 
 
 #Alien creation
-def alien_creator(level, aliens):
+def alien_creator(level, aliens, dict):
     if (level == 1):
         for i in range(2):
-             alien = Alien (300 + 320 * i, 50, "alien1.png")
+             alien = Alien (300 + 320 * i, 50, "alien1.png", True)
              aliens.append(alien)     
 
     if (level == 2):
         for i in range(2):
             for j in range(3):
-                alien = Alien(120 + 350 * j, 50 + 80 * i , "alien1.png")
+                if i == 1:
+                    alien = Alien(120 + 350 * j, 50 + 80 * i , "alien1.png", True)
+                else:
+                    alien = Alien(120 + 350 * j, 50 + 80 * i , "alien1.png")
                 aliens.append(alien)
+                if i == 1:
+                    dict[alien] = aliens[i * 3 + j - 3]
 
     if (level == 3):
         for i in range(2):
             for j in range(8):
-                path = "alien" + str(i + 1) + ".png" 
-                alien = Alien(40 + 120 * j, 50 + 80 * i , path)
+                path = "alien" + str(i + 1) + ".png"
+                if i == 1:
+                    alien = Alien(40 + 120 * j, 50 + 80 * i , path, True)
+                else:
+                    alien = Alien(40 + 120 * j, 50 + 80 * i , path)
+                
                 aliens.append(alien)
+                if i == 1:
+                    dict[alien] = aliens[i * 8 + j - 8]
 
     if (level >= 4):
         for i in range(3):
             for j in range(8):
-                path = "alien" + str(i + 1) + ".png" 
-                alien = Alien(40 + 120 * j, 50 + 80 * i , path)
-                aliens.append(alien)                
+                path = "alien" + str(i + 1) + ".png"
+                if i == 2:
+                    alien = Alien(40 + 120 * j, 50 + 80 * i , path, True)
+                else:
+                    alien = Alien(40 + 120 * j, 50 + 80 * i , path) 
+                aliens.append(alien)    
+                if i >= 1:
+                    dict[alien] = aliens[i * 8 + j - 8]
 
 class Laser:
     def __init__ (self, x, y):
          self.x = x
-         self.y = y
+         self.y = y            
+
+class HeroLaser(Laser):
+    def __init__ (self, x, y):
+         super().__init__(x, y)
 
     def draw(self, game):
          laserPicture = pygame.image.load("laser.png")
@@ -191,6 +213,17 @@ class Laser:
     def move(self):
          self.y -= 10     
 
+class EnemyLaser(Laser):
+    def __init__ (self, x, y):
+         super().__init__(x, y)
+
+    def draw(self, game):
+         laserPicture = pygame.image.load("laser.png")
+         laserPicture = pygame.transform.scale(laserPicture, (50, 50))
+         game.screen.blit(laserPicture, (self.x, self.y))  
+
+    def move(self):
+         self.y += 10 
 
 class Game:
 
@@ -201,10 +234,12 @@ class Game:
      hero_vel = 10
      #defining aliens
      aliens = []
-     alien_creator(level, aliens)
+     alien_parents = {}
+     alien_creator(level, aliens, alien_parents)
      alienXDirection = "Left"
      alienYDirection = 0
-     lasers = []
+     hero_lasers = []
+     enemy_lasers = []
      cooldown = 0
      newLevelCounter = 0
      changedLevel = -1
@@ -227,8 +262,11 @@ class Game:
          for anAlien in self.aliens:
             anAlien.draw(self)
 
-         for laser in self.lasers:
-             laser.draw(self)   
+         for laser in self.hero_lasers:
+             laser.draw(self)
+
+         for laser in self.enemy_lasers:
+             laser.draw(self)      
         
         # change level           
          if len(self.aliens) == 0:
@@ -249,7 +287,8 @@ class Game:
              if self.newLevelCounter == 0:
                  self.doneLevelChange = 0
                  self.level += 1
-                 alien_creator(self.level, self.aliens)    
+                 self.alien_parents = {}
+                 alien_creator(self.level, self.aliens, self.alien_parents)    
 
          pygame.display.update()
 
@@ -283,15 +322,28 @@ class Game:
                      elif self.alienYDirection < 0:
                          self.alienYDirection += 1
                         
-             for laser in self.lasers:
+             for laser in self.hero_lasers:
                  if laser.y < 20:
-                     self.lasers.remove(laser)
+                     self.hero_lasers.remove(laser)
                  else:
                      laser.move()     
                      for alien in self.aliens:
                          if alien.checkColision(laser) == 1:
                              self.aliens.remove(alien)
-                             self.lasers.remove(laser)
+                             self.hero_lasers.remove(laser)
+
+             for laser in self.enemy_lasers:
+                 if laser.y > self.height:
+                     self.enemy_lasers.remove(laser)
+                 else:
+                     laser.move()
+
+             for alien in self.aliens:
+                 if alien.canAttack:
+                     if random.randint(1, 20) == 2:
+                         laser = EnemyLaser(alien.x, alien.y)
+                         self.enemy_lasers.append(laser)
+                         print("Copiluuuu")
 
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
@@ -303,13 +355,13 @@ class Game:
              if keys[pygame.K_RIGHT] and self.hero.x - self.hero_vel < game_width - 20:
                  self.hero.x += 10
              if keys[pygame.K_w] and self.cooldown == 0:
-                 laser = Laser(self.hero.x + 24, self.hero.y)
+                 laser = HeroLaser(self.hero.x + 24, self.hero.y)
                  self.cooldown = 20
-                 self.lasers.append(laser)
+                 self.hero_lasers.append(laser)
              if keys[pygame.K_UP] and self.cooldown == 0:
-                 laser = Laser(self.hero.x + 24, self.hero.y)
+                 laser = HeroLaser(self.hero.x + 24, self.hero.y)
                  self.cooldown = 20
-                 self.lasers.append(laser)
+                 self.hero_lasers.append(laser)
          pygame.display.flip()
          self.clock.tick(FPS)
          self.screen.fill((0, 0, 0))             
