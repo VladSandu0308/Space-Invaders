@@ -147,7 +147,6 @@ class Alien:
 
          if laserTopX <= self.x + alienWidth / 2 and laserTopX >= self.x - alienWidth / 2:             
              if laserTopY >= self.y - alienHeight / 2 and laserTopY <= self.y + alienHeight / 2:
-                 print("Hihi") 
                  return 1
          return 0     
 
@@ -207,6 +206,10 @@ class Game:
      alienYDirection = 0
      lasers = []
      cooldown = 0
+     newLevelCounter = 0
+     changedLevel = -1
+     doneLevelChange = 0
+
 
      def redraw_window(self):
          background = pygame.image.load("backgr.png")
@@ -226,6 +229,28 @@ class Game:
 
          for laser in self.lasers:
              laser.draw(self)   
+        
+        # change level           
+         if len(self.aliens) == 0:
+             # in cazul in care nivelul respectiv nu a fost deja considerat terminat
+             if self.doneLevelChange != 1 and self.changedLevel != self.level:
+                 self.newLevelCounter = 200
+                 self.doneLevelChange = 1
+                 self.changedLevel = self.level
+
+             if self.newLevelCounter != 0:  
+
+                 if self.newLevelCounter % 50 > 19:
+                     end_level = text_format(f"LEVEL{self.level} COMPLETE", font, 110, yellow)
+                     self.screen.blit(end_level, (190, 250))
+                 self.newLevelCounter -= 1
+
+
+             if self.newLevelCounter == 0:
+                 self.doneLevelChange = 0
+                 self.level += 1
+                 alien_creator(self.level, self.aliens)    
+
          pygame.display.update()
 
 
@@ -245,15 +270,6 @@ class Game:
                  if event.type == pygame.QUIT:
                      done  = True
 
-             # change level
-             
-             if len(self.aliens) == 0:
-                 end_level = text_format("LEVEL COMPLETE", font, 50, yellow)
-                 self.screen.blit(end_level, (self.width / 2, self.height / 2))
-
-                 self.level += 1
-                 alien_creator(self.level, self.aliens)
-
              # Moving the aliens
              if self.aliens and self.level > 3:
                  for alien in self.aliens:
@@ -269,30 +285,31 @@ class Game:
                         
              for laser in self.lasers:
                  if laser.y < 20:
-                     print("DELETE")
                      self.lasers.remove(laser)
                  else:
                      laser.move()     
                      for alien in self.aliens:
                          if alien.checkColision(laser) == 1:
-                             print("DAAAAAAAAAAAA")
                              self.aliens.remove(alien)
                              self.lasers.remove(laser)
 
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
                  self.hero.x -= 10
+             if keys[pygame.K_LEFT] and self.hero.x - self.hero_vel > 0:
+                 self.hero.x -= 10                 
              if keys[pygame.K_d] and self.hero.x - self.hero_vel < game_width - 20:
                  self.hero.x += 10
-             if keys[pygame.K_LEFT] and self.hero.x - self.hero_vel > 0:
-                 self.hero.x -= 10
              if keys[pygame.K_RIGHT] and self.hero.x - self.hero_vel < game_width - 20:
                  self.hero.x += 10
              if keys[pygame.K_w] and self.cooldown == 0:
                  laser = Laser(self.hero.x + 24, self.hero.y)
                  self.cooldown = 20
                  self.lasers.append(laser)
-
+             if keys[pygame.K_UP] and self.cooldown == 0:
+                 laser = Laser(self.hero.x + 24, self.hero.y)
+                 self.cooldown = 20
+                 self.lasers.append(laser)
          pygame.display.flip()
          self.clock.tick(FPS)
          self.screen.fill((0, 0, 0))             
