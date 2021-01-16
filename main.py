@@ -7,8 +7,8 @@ pygame.init()
 
 # music
 pygame.mixer.init()
-#pygame.mixer.music.load("start.mp3")
-#pygame.mixer.music.play(-1)
+pygame.mixer.music.load("start.mp3")
+pygame.mixer.music.play()
 # Center the Game Application
 #os.environ['SDL_VIDEO_CENTERED'] = '1'
 
@@ -68,6 +68,7 @@ def main_menu():
                 if event.key==pygame.K_RETURN:
                     if selected=="start":
                         print("Start")
+                        pygame.mixer.music.stop()
                         game = Game(game_width, game_height)
                     if selected=="quit":
                         pygame.quit()
@@ -224,8 +225,8 @@ class HeroLaser(Laser):
          laserPicture = pygame.transform.scale(laserPicture, (50, 50))
          game.screen.blit(laserPicture, (self.x, self.y))  
 
-    def move(self):
-         self.y -= 10     
+    def move(self, tick):
+         self.y -= 0.3 * tick     
 
 class EnemyLaser(Laser):
     def __init__ (self, x, y):
@@ -236,15 +237,15 @@ class EnemyLaser(Laser):
          laserPicture = pygame.transform.scale(laserPicture, (35, 35))
          game.screen.blit(laserPicture, (self.x, self.y))  
 
-    def move(self):
-         self.y += 10 
+    def move(self, tick):
+         self.y += 0.3 * tick  
 
 class Game:
 
      screen = None
      level = 1
      levelMax = 5
-     lives = 30
+     lives = 50
 
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
@@ -317,7 +318,6 @@ class Game:
              self.background = pygame.transform.scale(self.background, (1000, 800))
              won_game = text_format("Congratulations! You won!", font, 70, (60, 179, 113))
              self.screen.blit(won_game, (200, 30))
-
              again_label = text_format("If you want to play again press SPACE", font, 50, (0, 128, 128))
              self.screen.blit(again_label, (190, 100))
 
@@ -359,9 +359,12 @@ class Game:
          done = False
          self.endGame = False
          self.drawDetails = True
-         while not done:
+        
+         while not done:   
              if self.cooldown > 0:
                  self.cooldown -= 1
+
+             tick = self.clock.tick(FPS)
              self.redraw_window()
              for event in pygame.event.get():
                  if event.type == pygame.QUIT:
@@ -385,9 +388,11 @@ class Game:
                  if laser.y < 20:
                      self.hero_lasers.remove(laser)
                  else:
-                     laser.move()     
+                     laser.move(tick)     
                      for alien in self.aliens:
                          if alien.checkColision(laser) == 1:
+                             pygame.mixer.music.load("killedinvader.wav")
+                             pygame.mixer.music.play()
                              self.aliens.remove(alien)
                              self.hero_lasers.remove(laser)
                              if alien in self.alien_parents:
@@ -400,7 +405,7 @@ class Game:
                  if laser.y > self.height:
                      self.enemy_lasers.remove(laser)
                  else:
-                     laser.move()
+                     laser.move(tick)
                      if self.hero.checkColision(laser) == 1:
                         self.lives -= 1
                         self.enemy_lasers.remove(laser)
@@ -422,15 +427,19 @@ class Game:
              if keys[pygame.K_RIGHT] and self.hero.x - self.hero_vel < game_width - 20:
                  self.hero.x += 10
              if keys[pygame.K_w] and self.cooldown == 0:
+                 pygame.mixer.music.load("shoot.wav")
+                 pygame.mixer.music.play()
                  laser = HeroLaser(self.hero.x + 24, self.hero.y)
                  self.cooldown = 20
                  self.hero_lasers.append(laser)
              if keys[pygame.K_UP] and self.cooldown == 0:
+                 pygame.mixer.music.load("shoot.wav")
+                 pygame.mixer.music.play()                 
                  laser = HeroLaser(self.hero.x + 24, self.hero.y)
                  self.cooldown = 20
                  self.hero_lasers.append(laser)
+
          pygame.display.flip()
-         self.clock.tick(FPS)
          self.screen.fill((0, 0, 0))             
 
 #Initialize the Game
