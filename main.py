@@ -244,8 +244,8 @@ class Game:
 
      screen = None
      level = 1
-     levelMax = 5
-     lives = 50
+     levelMax = 2
+     lives = 5
 
      hero = Hero(game_width/2 - 50, game_height - 100)
      hero_vel = 10
@@ -326,9 +326,10 @@ class Game:
                  self.lives = 5
                  self.level = 1
                  self.endGame = False
+                 self.drawDetails = True
                  alien_creator(self.level, self.aliens, self.alien_parents)  
                  self.background = pygame.image.load("backgr.png")
-                 self.background = pygame.transform.scale(background, (1000, 800))   
+                 self.background = pygame.transform.scale(self.background, (1000, 800))   
 
          #Game Over
          if self.lives == 0:
