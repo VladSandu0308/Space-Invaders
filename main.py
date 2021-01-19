@@ -212,8 +212,15 @@ def alien_creator(level, aliens, dict):
 class Laser:
     def __init__ (self, x, y):
          self.x = x
-         self.y = y            
+         self.y = y
 
+    def draw(self, game):
+        pass            
+
+    def move(self, tick):
+        pass
+
+# Hero laser child 
 class HeroLaser(Laser):
     def __init__ (self, x, y):
          super().__init__(x, y)
@@ -226,6 +233,7 @@ class HeroLaser(Laser):
     def move(self, tick):
          self.y -= 0.3 * tick     
 
+# Enemy laser class
 class EnemyLaser(Laser):
     def __init__ (self, x, y):
          super().__init__(x, y)
@@ -361,6 +369,7 @@ class Game:
          self.endGame = False
          self.drawDetails = True
         
+        # main game loop (for frames)
          while not done:   
              if self.cooldown > 0:
                  self.cooldown -= 1
