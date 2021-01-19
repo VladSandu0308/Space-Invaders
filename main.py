@@ -9,8 +9,6 @@ pygame.init()
 pygame.mixer.init()
 pygame.mixer.music.load("start.mp3")
 pygame.mixer.music.play()
-# Center the Game Application
-#os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 # Game Resolution
 menu_width=800
@@ -31,10 +29,6 @@ def text_format(message, textFont, textSize, textColor):
 # Colors
 white=(255, 255, 255)
 black=(0, 0, 0)
-gray=(50, 50, 50)
-red=(255, 0, 0)
-green=(0, 255, 0)
-blue=(0, 0, 255)
 yellow=(255, 255, 0)
 
 # Game Fonts
@@ -103,6 +97,7 @@ def main_menu():
         clock.tick(FPS)
         pygame.display.set_caption("Space Invaders")
 
+# Hero (The Ship) class
 class Hero:
      def __init__ (self, x, y):
          self.x = x
@@ -122,6 +117,7 @@ class Hero:
                  return 1
          return 0   
 
+# alien class
 class Alien:
     def __init__ (self, x, y, imagePath, canAttack=False):
          self.x = x
@@ -168,7 +164,8 @@ class Alien:
          return 0     
 
 
-#Alien creation
+#Alien creation (for each level)
+# You cand easily add new levels
 def alien_creator(level, aliens, dict):
     if (level == 1):
         for i in range(2):
@@ -211,6 +208,7 @@ def alien_creator(level, aliens, dict):
                 if i >= 1:
                     dict[alien] = aliens[i * 8 + j - 8]
 
+# base laser class
 class Laser:
     def __init__ (self, x, y):
          self.x = x
@@ -244,10 +242,10 @@ class Game:
 
      screen = None
      level = 1
-     levelMax = 2
+     levelMax = 5
      lives = 5
 
-     hero = Hero(game_width/2 - 50, game_height - 100)
+     hero = Hero(game_width / 2 - 50, game_height - 100)
      hero_vel = 10
      #defining aliens
      aliens = []
@@ -264,6 +262,7 @@ class Game:
      background = pygame.image.load("backgr.png")
      background = pygame.transform.scale(background, (1000, 800))
 
+    # redraw funcion (called each frame)
      def redraw_window(self):
          screen.blit(self.background, [0, 0])
 
@@ -334,6 +333,7 @@ class Game:
          #Game Over
          if self.lives == 0:
              self.aliens = []
+             self.enemy_lasers = []
              self.endGame = True
              end_level = text_format("GAME OVER!", font, 110, (221, 160, 221))
              self.screen.blit(end_level, (300, 210))
@@ -384,7 +384,8 @@ class Game:
                          self.alienYDirection -= 1
                      elif self.alienYDirection < 0:
                          self.alienYDirection += 1
-                        
+
+            # hero lasers         
              for laser in self.hero_lasers:
                  if laser.y < 20:
                      self.hero_lasers.remove(laser)
@@ -401,7 +402,7 @@ class Game:
                                      if self.alien_parents[alien] == parent:
                                          parent.canAttack = True
                                  
-
+             #enemy laser
              for laser in self.enemy_lasers:
                  if laser.y > self.height:
                      self.enemy_lasers.remove(laser)
@@ -411,13 +412,15 @@ class Game:
                         self.lives -= 1
                         self.enemy_lasers.remove(laser)
 
+            # alien attack AI
              for alien in self.aliens:
                  if alien.canAttack and alien.cooldown == 0:
                      if random.randint(1, 20) == 2:
                          laser = EnemyLaser(alien.x + 8, alien.y + 24)
                          self.enemy_lasers.append(laser)
                          alien.cooldown = 100
-
+            
+            # key input
              keys = pygame.key.get_pressed()
              if keys[pygame.K_a] and self.hero.x - self.hero_vel > 0:
                  self.hero.x -= 10
